@@ -36,11 +36,14 @@ export class LoginComponent implements OnInit {
     username: string, 
     password: string
   ) {
-    this.auth.login(
-      username, password
-    ).subscribe(token => {
-      console.log(`token:${token}`);
-    })
+    try {
+      this.auth.login(
+        username, password
+      );
+    } catch (err) {
+      console.log(`エラー:${err instanceof Error ? err.message : ''}`);
+    }
+    
   }
 
   async checkLogin() {

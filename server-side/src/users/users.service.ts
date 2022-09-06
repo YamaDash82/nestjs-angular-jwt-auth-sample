@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import passport from 'passport';
 
 export interface User {
   userId: number;

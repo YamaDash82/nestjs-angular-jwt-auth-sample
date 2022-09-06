@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { JwtHelperService } from '@auth0/angular-jwt';
+import { Router } from '@angular/router';
 
 const jwt = new JwtHelperService();
 
@@ -19,18 +20,30 @@ class DecodedToken {
 export class AuthService {
   private decodedToken: DecodedToken;
 
-  constructor(private http: HttpClient) { 
+  constructor(
+    private http: HttpClient, 
+    private router: Router, 
+  ) { 
     this.decodedToken = localStorage.getItem('auth_meta') ? JSON.parse(localStorage.getItem('auth_meta') as string) : new DecodedToken();
   }
 
-  login(username: string, password: string): Observable<any> {
+  login(username: string, password: string) {
     const url = `${environment.rootUrl}/auth/login`;
 
-    return this.http.post<any>(url, {username, password}).pipe(
-      map(token => {
-        return this.saveToken(token[`access_token`]);
-      })
-    );
+    try {
+      return this.http.post<any>(url, {username, password}).pipe(
+        map(token => {
+          return this.saveToken(token[`access_token`]);
+        })
+      ).subscribe(token => {
+        this.router.navigate(['/']);
+      });
+    } catch (err) {
+      throw err;
+    }
+    
+
+
   }
 
   private saveToken(token: any): any {
@@ -83,8 +96,10 @@ export class AuthService {
 
       this.saveToken(newToken);
 
+      console.log(`認証済:${JSON.stringify(this.decodedToken)}`);
       return true;
     } catch (err) {
+      console.log(`未認証`);
       return false;
     }
   }

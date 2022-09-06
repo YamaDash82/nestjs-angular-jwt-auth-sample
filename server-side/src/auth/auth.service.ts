@@ -12,13 +12,18 @@ export class AuthService {
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.usersService.findOne(username);
 
-    if (user && user.password === password) {
+    if (!user) {
+      throw new Error('未登録のユーザーです。');
+    }
+
+    if (user.password === password) {
       //spread演算子というらしい。
       const { password, ...result } = user;
 
       return result;
+    } else {
+      throw new Error('パスワードが一致しません。');
     }
-    return null;
   }
 
   async login(user: {username: string, userId: number}) {
