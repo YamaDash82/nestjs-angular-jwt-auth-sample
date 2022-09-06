@@ -10,12 +10,22 @@ export class AppController {
   @UseGuards(LocalAuthGuard)
   @Post('auth/login')
   async login(@Request() req) {
+    console.log(`auth/login:${JSON.stringify(req.user)}`);
+    return this.authService.login(req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('check-login') 
+  checkLogin(@Request() req) {
+    console.log(`check-login:${JSON.stringify(req.user)}`);
+
     return this.authService.login(req.user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req) { 
+  getProfile(@Request() req) {
+    console.log(`profile着信:${JSON.stringify(req.user)}`);
     return req.user;
   }
 }

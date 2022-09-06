@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { ThisReceiver } from '@angular/compiler';
 
 const jwt = new JwtHelperService();
 
@@ -39,13 +38,6 @@ export class AuthService {
       this.decodedToken = jwt.decodeToken(token);
       localStorage.setItem('auth_tkn', token);
       localStorage.setItem('auth_meta', JSON.stringify(this.decodedToken));
-
-      console.log(`
-        decodedToken:${this.decodedToken}
-        exp:${this.decodedToken.exp}, 
-        username::${this.decodedToken.username}
-        userId::${this.decodedToken.userId}
-      `);
     } catch (err) {
       console.log(`saveTokenError:${err}`);
     }
@@ -55,44 +47,46 @@ export class AuthService {
 
   async isAutenticated(): Promise<boolean> {
     if (!this.decodedToken) {
-      console.log(`0`);
+      this.logout();
       return false;
     }
-
-    if (this.decodedToken.exp < new Date().getTime()) {
-      const dt = new Date()
-      dt.setTime(this.decodedToken.exp);
-      console.log(`１
-        有効期限:${this.decodedToken.exp}
-        今:${new Date().getTime()}
-        ええと:${dt.toString()}
-      `);
+    
+    //トークンの保持している有効期限は秒単位、Date#getTime()で取得される値はミリ秒単位のため、Date#getTime()を1000倍して比較する。
+    if (this.decodedToken.exp < (new Date().getTime() / 1000)) {
+      this.logout();
       return false;
     }
 
     const token = localStorage.getItem('auth_tkn');
     if(!token) {
-      console.log(`２`);
       return false;
     }
 
-    const url = `${environment.rootUrl}/profile`;
+    const url = `${environment.rootUrl}/check-login`;
 
     try {
-      const result = this.http.get<any>(url, {
+      const result = await this.http.get<any>(url, {
         headers: new HttpHeaders({
           Authorization: `Bearer ${token}`
         })
-      }).toPromise();
+      }).pipe(
+        map(token => {
+          if(!("access_token" in token)) {
+            throw new Error('トークンが取得できませんでした。');
+          }
 
-      console.log(result);
+          return token['access_token'];
+        })
+      ).toPromise();
 
-      return "username" in result;
+      const newToken = result;
+
+      this.saveToken(newToken);
+
+      return true;
     } catch (err) {
       return false;
     }
-    
-
   }
 
   logout() {
