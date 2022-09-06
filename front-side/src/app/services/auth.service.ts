@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { Router } from '@angular/router';
 
 const jwt = new JwtHelperService();
 
@@ -21,29 +20,35 @@ export class AuthService {
   private decodedToken: DecodedToken;
 
   constructor(
-    private http: HttpClient, 
-    private router: Router, 
+    private http: HttpClient
   ) { 
     this.decodedToken = localStorage.getItem('auth_meta') ? JSON.parse(localStorage.getItem('auth_meta') as string) : new DecodedToken();
   }
 
-  login(username: string, password: string) {
+  async login(username: string, password: string): Promise<void> {
     const url = `${environment.rootUrl}/auth/login`;
 
     try {
-      return this.http.post<any>(url, {username, password}).pipe(
-        map(token => {
-          return this.saveToken(token[`access_token`]);
+      const token = await (async () => {
+        return new Promise((resolve, reject) => {
+          this.http.post<{ access_token: string }>(url, {username, password}).pipe(
+            catchError((error: HttpErrorResponse) => {
+              return throwError(() => new Error(error.error.message));
+            }), 
+            map(token => {
+              return token.access_token
+            })
+          ).subscribe({
+            next: (token) => { return resolve(token); }, 
+            error: (err) => { return reject(err); }
+          });
         })
-      ).subscribe(token => {
-        this.router.navigate(['/']);
-      });
+      })();
+
+      this.saveToken(token);
     } catch (err) {
       throw err;
     }
-    
-
-
   }
 
   private saveToken(token: any): any {
@@ -53,6 +58,7 @@ export class AuthService {
       localStorage.setItem('auth_meta', JSON.stringify(this.decodedToken));
     } catch (err) {
       console.log(`saveTokenError:${err}`);
+      throw err;
     }
 
     return token;
@@ -71,35 +77,40 @@ export class AuthService {
     }
 
     const token = localStorage.getItem('auth_tkn');
+
     if(!token) {
       return false;
     }
 
-    const url = `${environment.rootUrl}/check-login`;
-
     try {
-      const result = await this.http.get<any>(url, {
-        headers: new HttpHeaders({
-          Authorization: `Bearer ${token}`
-        })
-      }).pipe(
-        map(token => {
-          if(!("access_token" in token)) {
-            throw new Error('トークンが取得できませんでした。');
-          }
+      const url = `${environment.rootUrl}/check-login`;
 
-          return token['access_token'];
-        })
-      ).toPromise();
+      const result = await ((): Promise<boolean> => {
+        return new Promise((resolve, reject) => {
+          this.http.get<{ access_token: string }>(url, {
+            headers: new HttpHeaders({
+              Authorization: `Bearer ${token}`
+            })
+          }).pipe(
+            catchError((err: HttpErrorResponse) => {
+              return throwError(() => { new Error(err.error.message); });
+            }), 
+            tap(data => {
+              if(!("access_token" in data)) {
+                throw new Error('トークンが取得できませんでした。');
+              }
 
-      const newToken = result;
-
-      this.saveToken(newToken);
-
-      console.log(`認証済:${JSON.stringify(this.decodedToken)}`);
-      return true;
+              this.saveToken(data.access_token);
+            })
+          ).subscribe({
+            next: _ => { return resolve(true); }, 
+            error: err => { return reject(err); }
+          })
+        });
+      })();
+      
+      return result;
     } catch (err) {
-      console.log(`未認証`);
       return false;
     }
   }
@@ -108,5 +119,37 @@ export class AuthService {
     localStorage.removeItem('autn_tkn');
     localStorage.removeItem('autn_meta');
     this.decodedToken = new DecodedToken();
+  }
+
+  async registerUser(
+    username: string, 
+    password: string
+  ) {
+    const url = `${environment.rootUrl}/user-registration`;
+
+    try {
+      const result = await (async (): Promise<boolean> => {
+        return new Promise((resolve, reject) => {
+          this.http.post<{ access_token: string }>(url, { username, password}).pipe(
+            catchError((err: HttpErrorResponse) => {
+              return throwError(() => new Error(err.error.message));
+            }), 
+            map(data => {
+              return data.access_token;
+            })
+          ).subscribe({
+            next: token => {
+              this.saveToken(token);
+              return resolve(true);
+            }, 
+            error: err => { return reject(err); }
+          })
+        });
+      })();
+
+      return result;
+    } catch (err) {
+      throw err;
+    }
   }
 }
