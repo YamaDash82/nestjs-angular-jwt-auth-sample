@@ -79,7 +79,7 @@ http://localhost:4200        #メイン画面
 ![ログイン画面](./documents/img/login.PNG)  
 ログインエラー時、サーバから返されたエラーを表示します。  
 ![ログイン画面(エラー)](./documents/img/login-error.PNG)  
-未認証状態で`APITest`ボタンをクリックしWebAPIにリクエストするとエラーになります。
+未認証状態で`APITest`ボタンをクリックしWebAPIにリクエストするとエラーになります。  
 ![ログイン画面(未認証リクエスト)](./documents/img/login-api-error.PNG)  
 ユーザー名、パスワードを入力し、認証が通ると、`http://localhost:4200`に移動します。  
 ![メイン画面](./documents/img/main.PNG)  
