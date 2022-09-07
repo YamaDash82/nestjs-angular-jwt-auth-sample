@@ -15,13 +15,14 @@ export class ApiService {
   hoge(): Observable<string> {
     const url = `${environment.rootUrl}/api/hoge`;
 
-    const token = localStorage.getItem('auth_tkn');
-    
     return this.http.get(url, 
       {
+        
+        /* ヘッダへのトークンの設定は、AppModuleでimportしたJwtModuleによって自動的に行われる。
         headers: new HttpHeaders({
           Authorization: `Bearer ${token}`,
         }),
+        */
         responseType: "text"
       }
     );

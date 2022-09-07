@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { throwError } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { JwtHelperService } from '@auth0/angular-jwt';
@@ -62,7 +62,6 @@ export class AuthService {
 
       this._loginUser = loginUser;
     } catch (err) {
-      console.log(`saveTokenError:${err}`);
       throw err;
     }
 
@@ -81,22 +80,13 @@ export class AuthService {
       return false;
     }
 
-    const token = localStorage.getItem('auth_tkn');
-
-    if(!token) {
-      return false;
-    }
-
     try {
       const url = `${environment.rootUrl}/check-login`;
 
       const result = await ((): Promise<boolean> => {
         return new Promise((resolve, reject) => {
-          this.http.get<{ access_token: string }>(url, {
-            headers: new HttpHeaders({
-              Authorization: `Bearer ${token}`
-            })
-          }).pipe(
+          //JwtModuleにより自動でヘッダーにJWTトークンが設定される。
+          this.http.get<{ access_token: string }>(url).pipe(
             catchError((err: HttpErrorResponse) => {
               return throwError(() => { new Error(err.error.message); });
             }), 
@@ -121,8 +111,9 @@ export class AuthService {
   }
 
   logout() {
-    localStorage.removeItem('autn_tkn');
+    localStorage.removeItem('auth_tkn');
     localStorage.removeItem('autn_meta');
+
     this.decodedToken = new DecodedToken();
     this._loginUser = null;
   }
