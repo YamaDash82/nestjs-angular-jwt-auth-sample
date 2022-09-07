@@ -20,10 +20,10 @@ import { Router } from '@angular/router';
         パスワード再入力:<input type="password" #password2>
       </label>
     </div>
-    <div *ngIf="errorMessage">
+    <div *ngIf="errorMessage" class="error-message">
       {{errorMessage}}
     </div>
-    <div>
+    <div class="button-container">
       <button
         (click)="registerUser(userName.value, password1.value, password2.value)"
       >登録</button>

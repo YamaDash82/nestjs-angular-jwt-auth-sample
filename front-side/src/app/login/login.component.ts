@@ -7,7 +7,7 @@ import { AuthService } from '../services/auth.service';
   template: `
     <div>
       <label>
-        ユーザ名:
+        ユーザー名:
         <input #username type="text">
       </label>
     </div>
@@ -17,12 +17,12 @@ import { AuthService } from '../services/auth.service';
         <input #password type="password">
       </label>
     </div>
-    <div *ngIf="errorMessage">
+    <a routerLink="/user-registration">新規ユーザー登録</a>
+    <div *ngIf="errorMessage" class="error-message">
       {{errorMessage}}
     </div>
-    <div>
+    <div class="button-container">
       <button (click)="login(username.value, password.value)">ログイン</button>
-      <button (click)="checkLogin()">ログインチェック</button>
     </div>
   `,
   styleUrls: ['./login.component.css']
