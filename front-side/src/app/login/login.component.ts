@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ApiService } from '../services/api.service';
 
 @Component({
   selector: 'app-login',
@@ -23,6 +24,7 @@ import { AuthService } from '../services/auth.service';
     </div>
     <div class="button-container">
       <button (click)="login(username.value, password.value)">ログイン</button>
+      <button (click)="apiTest()">APITest</button>
     </div>
   `,
   styleUrls: ['./login.component.css']
@@ -32,6 +34,7 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private auth: AuthService, 
+    private api: ApiService, 
     private router: Router, 
   ) { }
 
@@ -53,9 +56,10 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  async checkLogin() {
-    const result = await this.auth.isAutenticated();
-
-    console.log(`結果:${result}`);
+  apiTest() {
+    this.api.hoge().subscribe({
+      next: data => { console.log(`API受信データ:${data}`); }, 
+      error: err => { this.errorMessage = err.message; }
+    })
   }
 }

@@ -18,6 +18,7 @@ class DecodedToken {
 })
 export class AuthService {
   private decodedToken: DecodedToken;
+  private _loginUser: { username: string, userId: number } | null = null;
 
   constructor(
     private http: HttpClient
@@ -56,6 +57,10 @@ export class AuthService {
       this.decodedToken = jwt.decodeToken(token);
       localStorage.setItem('auth_tkn', token);
       localStorage.setItem('auth_meta', JSON.stringify(this.decodedToken));
+
+      const { exp, ...loginUser } = this.decodedToken;
+
+      this._loginUser = loginUser;
     } catch (err) {
       console.log(`saveTokenError:${err}`);
       throw err;
@@ -119,6 +124,7 @@ export class AuthService {
     localStorage.removeItem('autn_tkn');
     localStorage.removeItem('autn_meta');
     this.decodedToken = new DecodedToken();
+    this._loginUser = null;
   }
 
   async registerUser(
@@ -151,5 +157,9 @@ export class AuthService {
     } catch (err) {
       throw err;
     }
+  }
+
+  get loginUser(): { username: string, userId: number } | null {
+    return this._loginUser;
   }
 }

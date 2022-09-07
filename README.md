@@ -77,6 +77,22 @@ http://localhost:4200        #メイン画面
 
 ユーザー名、パスワードを入力し、認証が通ると、`http://localhost:4200`に移動します。  
 ![メイン画面](./documents/img/main.PNG)  
+設定した有効期間、ログイン状態を保持します。リロードしても、このメイン画面を表示します。  
+有効期間内に再アクセス時、ログイン有効期間を更新します。  
+有効期間の設定箇所は以下です。  
+```typescript:/server-side/src/auth/auth.modules.ts
+...
+@Module({
+  imports: [
+    UsersModule, 
+    PassportModule, 
+    JwtModule.register({
+      secret: jwtConstants.secret, 
+      signOptions: { expiresIn: '60s' } //←有効期間の設定箇所 60秒に設定
+    })
+  ], 
+  ...
+```
 新規ユーザ登録は`http://localhost:4200/user-registration`で行います。  
 ![新規ユーザー登録画面](./documents/img/user-registration.PNG)  
 エラー時、サーバから返されたエラーを表示します。  
@@ -87,7 +103,7 @@ JWTのハッシュキーを`/serer-side/src/constsnts.ts`でハードコーデ�
 本番用に開発される際は、公開しないように注意してください。  
 > WARNING
 この鍵を公開するべきではない。ここではコードが何をしているかを明確にする為公開しているが、実運用システムではsecrets valut、環境変数、設定サービスなどの適切な手段を用いて鍵を保護しなければならない。  
-([security-authentication｜NestJS 公式ドキュメントver7日本語訳](https://zenn.dev/kisihara_c/books/nest-officialdoc-jp/viewer/security-authentication)  より引用)
+([security-authentication｜NestJS 公式ドキュメントver7日本語訳](https://zenn.dev/kisihara_c/books/nest-officialdoc-jp/viewer/security-authentication)より引用)
 
 ```typescript:/server-side/src/constants.ts
 export const jwtConstants = {
@@ -95,6 +111,7 @@ export const jwtConstants = {
 };
 ```
 ```typescript:/server-side/src/auth/auth.modules.ts
+...
 @Module({
   imports: [
     UsersModule, 
